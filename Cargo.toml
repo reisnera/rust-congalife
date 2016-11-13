@@ -1,0 +1,7 @@
+[package]
+name = "congalife"
+version = "0.1.0"
+authors = ["apostrophest <stephen@chomadoma.net>"]
+
+[dependencies]
+rand = "0.3.0"
