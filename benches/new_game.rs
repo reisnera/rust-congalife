@@ -9,15 +9,15 @@ use test::Bencher;
 
 #[bench]
 fn bench_new_game_64(b: &mut Bencher) {
-    b.iter(|| Game::new(64));
+    b.iter(|| Game::new(64, 0.2));
 }
 
 #[bench]
 fn bench_new_game_128(b: &mut Bencher) {
-    b.iter(|| Game::new(128));
+    b.iter(|| Game::new(128, 0.2));
 }
 
 #[bench]
-fn bench_new_game_1024(b: &mut Bencher) {
-    b.iter(|| Game::new(1024));
+fn bench_new_game_512(b: &mut Bencher) {
+    b.iter(|| Game::new(1024, 0.2));
 }
