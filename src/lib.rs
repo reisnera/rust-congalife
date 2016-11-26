@@ -3,7 +3,7 @@ extern crate rand;
 use self::rand::{thread_rng, Rng};
 use std::sync::{Arc, Mutex, RwLock};
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum State {
 	Dead,
 	Alive,
