@@ -6,70 +6,40 @@ use self::rand::{thread_rng, Rng};
 use std::sync::{Arc, Mutex, RwLock};
 use rayon::prelude::*;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum State {
-	Dead,
-	Alive,
-}
-
 #[derive(Clone, PartialEq, Eq)]
 pub struct GameCell {
 	x: usize,
 	y: usize,
-	pub state: State,
+	pub alive: bool,
 }
 
 impl GameCell {
-	fn count_neighbors(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		let mut count: usize = 0;
+	fn count_neighbors(&self, board: &Vec<GameCell>, size: usize) -> u8 {
+		let mut count: u8 = 0;
 
 		// UL
-		match board.get((self.y - 1) * size + self.x - 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x - 1) { count += 1; }
 
 		// UU
-		match board.get((self.y - 1) * size + self.x + 0) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x + 0) { count += 1; }
 
 		// UR
-		match board.get((self.y - 1) * size + self.x + 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x + 1) { count += 1; }
 
 		// L
-		match board.get(self.y * size + self.x - 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get(self.y * size + self.x - 1)       { count += 1; }
 
 		// R
-		match board.get(self.y * size + self.x + 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get(self.y * size + self.x + 1)       { count += 1; }
 
 		// DL
-		match board.get((self.y + 1) * size + self.x - 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x - 1) { count += 1; }
 
 		// DD
-		match board.get((self.y + 1) * size + self.x + 0) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x + 0) { count += 1; }
 
 		// DR
-		match board.get((self.y + 1) * size + self.x + 1) {
-			Some(&GameCell {state: State::Alive, ..}) => count += 1,
-			_ => {},
-		}
+		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x + 1) { count += 1; }
 
 		count
 	}
@@ -111,16 +81,16 @@ impl Game {
 		assert!(percent_chance_for_cell_to_be_alive < 1.0);
 		assert!(percent_chance_for_cell_to_be_alive >= 0.0);
 
-		let mut board = vec![GameCell {x: 0, y: 0, state: State::Dead}; size*size];
+		let mut board = vec![GameCell {x: 0, y: 0, alive: false}; size*size];
 
 		for y in 0..size {
 			for x in 0..size {
 				let index = y * size + x;
 				board[index].x = x;
 				board[index].y = y;
-				board[index].state = match thread_rng().next_f64() {
-					i if i < percent_chance_for_cell_to_be_alive => State::Alive,
-					_ => State::Dead,
+				board[index].alive = match thread_rng().next_f64() {
+					i if i < percent_chance_for_cell_to_be_alive => true,
+					_ => false,
 				};
 			}
 		}
@@ -136,22 +106,22 @@ impl Game {
 		self.current.read().unwrap()
 	}
 
-	fn get_next_cell_from_current_cell_and_neighbors(game_cell: &GameCell, number_of_neighbors: usize) -> GameCell {
-		match game_cell.state {
-			State::Dead => {
+	fn get_next_cell_from_current_cell_and_neighbors(game_cell: &GameCell, number_of_neighbors: u8) -> GameCell {
+		match game_cell.alive {
+			false => {
 				if number_of_neighbors != 3 {
-					GameCell {x: game_cell.x, y: game_cell.y, state: State::Dead}
+					GameCell {x: game_cell.x, y: game_cell.y, alive: false}
 				} else {
-					GameCell {x: game_cell.x, y: game_cell.y, state: State::Alive}
+					GameCell {x: game_cell.x, y: game_cell.y, alive: true}
 				}
 			},
-			State::Alive => {
+			true => {
 				if number_of_neighbors < 2 || number_of_neighbors > 3 {
-					GameCell {x: game_cell.x, y: game_cell.y, state: State::Dead}
+					GameCell {x: game_cell.x, y: game_cell.y, alive: false}
 				} else {
-					GameCell {x: game_cell.x, y: game_cell.y, state: State::Alive}
+					GameCell {x: game_cell.x, y: game_cell.y, alive: true}
 				}
-			}
+			},
 		}
 	}
 
