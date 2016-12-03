@@ -22,87 +22,56 @@ pub struct GameCell {
 impl GameCell {
 	fn count_neighbors(&self, board: &Vec<GameCell>, size: usize) -> usize {
 		let mut count: usize = 0;
-		count += self.ul(board, size);
-		count += self.uu(board, size);
-		count += self.ur(board, size);
-		count += self.l(board, size);
-		count += self.r(board, size);
-		count += self.dl(board, size);
-		count += self.dd(board, size);
-		count += self.dr(board, size);
+
+		// UL
+		match board.get((self.y - 1) * size + self.x - 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// UU
+		match board.get((self.y - 1) * size + self.x + 0) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// UR
+		match board.get((self.y - 1) * size + self.x + 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// L
+		match board.get(self.y * size + self.x - 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// R
+		match board.get(self.y * size + self.x + 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// DL
+		match board.get((self.y + 1) * size + self.x - 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// DD
+		match board.get((self.y + 1) * size + self.x + 0) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
+		// DR
+		match board.get((self.y + 1) * size + self.x + 1) {
+			Some(&GameCell {state: State::Alive, ..}) => count += 1,
+			_ => {},
+		}
+
 		count
-	}
-
-	fn ul(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y >= 1 && self.x != 0 {
-			match board[(self.y - 1) * size + self.x - 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn uu(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y >= 1 {
-			match board[(self.y - 1) * size + self.x + 0].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn ur(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y >= 1 && self.x != size - 1 {
-			match board[(self.y - 1) * size + self.x + 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn l(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.x != 0 {
-			match board[self.y * size + self.x - 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn r(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.x != size - 1 {
-			match board[self.y * size + self.x + 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn dl(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y != size - 1 && self.x != 0 {
-			match board[(self.y + 1) * size + self.x - 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn dd(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y != size - 1 {
-			match board[(self.y + 1) * size + self.x + 0].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
-	}
-
-	fn dr(&self, board: &Vec<GameCell>, size: usize) -> usize {
-		if self.y != size - 1 && self.x != size - 1 {
-			match board[(self.y + 1) * size + self.x + 1].state {
-				State::Alive => 1,
-				State::Dead  => 0,
-			}
-		} else {0}
 	}
 }
 
