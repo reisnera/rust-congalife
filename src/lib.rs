@@ -15,33 +15,26 @@ pub struct GameCell {
 
 impl GameCell {
 	fn count_neighbors(&self, board: &Vec<GameCell>, size: usize) -> u8 {
-		let mut count: u8 = 0;
+		let ul = if self.y >= 1 && self.x != 0 { board[(self.y - 1) * size + self.x - 1].alive } else {false};
+		let uu = if self.y >= 1 {board[(self.y - 1) * size + self.x + 0].alive } else {false};
+		let ur = if self.y >= 1 && self.x != size - 1 { board[(self.y - 1) * size + self.x + 1].alive } else {false};
+		let l  = if self.x != 0 {board[self.y * size + self.x - 1].alive } else {false};
+		let r  = if self.x != size - 1 {board[self.y * size + self.x + 1].alive } else {false};
+		let dl = if self.y != size - 1 && self.x != 0 {board[(self.y + 1) * size + self.x - 1].alive } else {false};
+		let dd = if self.y != size - 1 {board[(self.y + 1) * size + self.x + 0].alive } else {false};
+		let dr = if self.y != size - 1 && self.x != size - 1 {board[(self.y + 1) * size + self.x + 1].alive } else {false};
 
-		// UL
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x - 1) { count += 1; }
+		let mut neighbors: u8 = 0;
+		if ul == true { neighbors += 1; }
+		if uu == true { neighbors += 1; }
+		if ur == true { neighbors += 1; }
+		if l  == true { neighbors += 1; }
+		if r  == true { neighbors += 1; }
+		if dl == true { neighbors += 1; }
+		if dd == true { neighbors += 1; }
+		if dr == true { neighbors += 1; }
 
-		// UU
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x + 0) { count += 1; }
-
-		// UR
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y - 1) * size + self.x + 1) { count += 1; }
-
-		// L
-		if let Some(&GameCell {alive: true, ..}) = board.get(self.y * size + self.x - 1)       { count += 1; }
-
-		// R
-		if let Some(&GameCell {alive: true, ..}) = board.get(self.y * size + self.x + 1)       { count += 1; }
-
-		// DL
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x - 1) { count += 1; }
-
-		// DD
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x + 0) { count += 1; }
-
-		// DR
-		if let Some(&GameCell {alive: true, ..}) = board.get((self.y + 1) * size + self.x + 1) { count += 1; }
-
-		count
+		neighbors
 	}
 }
 
