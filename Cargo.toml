@@ -5,3 +5,5 @@ authors = ["apostrophest <stephen@chomadoma.net>"]
 
 [dependencies]
 rand = "0.3.0"
+rayon = "0.5.0"
+# crossbeam = "0.2.10"
