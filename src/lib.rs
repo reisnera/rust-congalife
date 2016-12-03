@@ -12,7 +12,7 @@ pub enum State {
 	Alive,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct GameCell {
 	x: usize,
 	y: usize,
