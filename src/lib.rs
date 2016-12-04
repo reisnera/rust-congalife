@@ -36,6 +36,18 @@ impl GameCell {
 
 		neighbors
 	}
+
+	// Calculates the next state for this cell (but does not set it!)
+	fn calculate_next_state_from_neighbor_count(&self, number_of_neighbors: u8) -> bool {
+		match self.alive {
+			false => {
+				if number_of_neighbors != 3 { false } else { true }
+			},
+			true => {
+				if number_of_neighbors < 2 || number_of_neighbors > 3 { false } else { true }
+			},
+		}
+	}
 }
 
 #[derive(Clone)]
@@ -89,17 +101,6 @@ impl Game {
 		self.current.read().unwrap()
 	}
 
-	fn get_next_state_from_current_cell_and_neighbor_count(game_cell: &GameCell, number_of_neighbors: u8) -> bool {
-		match game_cell.alive {
-			false => {
-				if number_of_neighbors != 3 { false } else { true }
-			},
-			true => {
-				if number_of_neighbors < 2 || number_of_neighbors > 3 { false } else { true }
-			},
-		}
-	}
-
 	pub fn advance(&self) {
 		let mut next_guard = self.next.lock().unwrap();
 		let current_guard = self.current.read().unwrap();
@@ -107,7 +108,7 @@ impl Game {
 		current_guard.par_iter()
 			.map(|game_cell| {
 				let neighbor_count = game_cell.count_neighbors(&*current_guard, self.size);
-				Game::get_next_state_from_current_cell_and_neighbor_count(game_cell, neighbor_count)
+				game_cell.calculate_next_state_from_neighbor_count(neighbor_count)
 			})
 			.collect_into(&mut *next_guard);
 
