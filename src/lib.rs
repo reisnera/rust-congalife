@@ -41,7 +41,7 @@ impl From<Vec<State>> for Game {
 			size: size,
 			coords: Arc::new(coords),
 			current: Arc::new(RwLock::new(preset_game)),
-			next: Arc::new(Mutex::new(Vec::with_capacity(size)))
+			next: Arc::new(Mutex::new(vec![State::Dead; size*size]))
 		}
 	}
 }
@@ -70,7 +70,7 @@ impl Game {
 			size: size,
 			coords: Arc::new(coords),
 			current: Arc::new(RwLock::new(board)),
-			next: Arc::new(Mutex::new(Vec::with_capacity(size))),
+			next: Arc::new(Mutex::new(vec![State::Dead; size*size])),
 		}
 	}
 
