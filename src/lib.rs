@@ -2,7 +2,6 @@ extern crate rand;
 extern crate rayon;
 // extern crate crossbeam;
 
-use self::rand::{thread_rng, Rng};
 use std::sync::{Arc, Mutex, RwLock};
 use rayon::prelude::*;
 
@@ -78,17 +77,16 @@ impl Game {
 
 		let mut board = vec![GameCell {x: 0, y: 0, alive: false}; size*size];
 
-		for y in 0..size {
-			for x in 0..size {
-				let index = y * size + x;
-				board[index].x = x;
-				board[index].y = y;
-				board[index].alive = match thread_rng().next_f64() {
+		board.par_iter_mut()
+			.enumerate()
+			.for_each(| (i, game_cell) | {
+				game_cell.y = i/size;
+				game_cell.x = i - game_cell.y * size;
+				game_cell.alive = match rand::random::<f64>() {
 					i if i < percent_chance_for_cell_to_be_alive => true,
 					_ => false,
 				};
-			}
-		}
+			});
 
 		Game {
 			size: size,
