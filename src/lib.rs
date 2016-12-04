@@ -1,6 +1,5 @@
 extern crate rand;
 extern crate rayon;
-// extern crate crossbeam;
 
 use self::rand::Rng;
 use std::sync::{Arc, Mutex, RwLock};
