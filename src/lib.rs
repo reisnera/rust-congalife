@@ -107,11 +107,7 @@ impl Game {
 		drop(current_guard);
 		let mut current_guard = self.current.write().unwrap();
 
-		current_guard.par_iter_mut()
-			.enumerate()
-			.for_each(| (i, state) | {
-				*state = next_guard[i];
-			});
+		current_guard.clone_from(&*next_guard);
 	}
 
 	fn count_neighbors(coord: &Coord, board: &Vec<State>, size: usize) -> u8 {
