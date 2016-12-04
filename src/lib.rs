@@ -84,13 +84,22 @@ impl Game {
 	}
 
 	pub fn advance(&self) {
+		self.advance_with(Game::count_neighbors);
+	}
+
+	pub fn advance_toroidally(&self) {
+		self.advance_with(Game::count_neighbors_toroidally);
+	}
+
+	fn advance_with<F>(&self, counting_func: F)
+		where F: Fn(&Coord, &Vec<State>, usize) -> u8 + Sync + 'static {
 		let mut next_guard = self.next.lock().unwrap();
 		let current_guard = self.current.read().unwrap();
 
 		self.coords.par_iter()
 			.enumerate()
 			.map(| (i, coord) | {
-				let neighbor_count = self.count_neighbors(coord, &*current_guard);
+				let neighbor_count = counting_func(coord, &*current_guard, self.size);
 				Game::calculate_next_state(current_guard[i], neighbor_count)
 			})
 			.collect_into(&mut *next_guard);
@@ -106,15 +115,87 @@ impl Game {
 			});
 	}
 
-	fn count_neighbors(&self, coord: &Coord, board: &Vec<State>) -> u8 {
-		let ul = if coord.y >= 1 && coord.x != 0 { board[(coord.y - 1) * self.size + coord.x - 1] } else { State::Dead };
-		let uu = if coord.y >= 1 { board[(coord.y - 1) * self.size + coord.x + 0] } else { State::Dead };
-		let ur = if coord.y >= 1 && coord.x != self.size - 1 { board[(coord.y - 1) * self.size + coord.x + 1] } else { State::Dead };
-		let l  = if coord.x != 0 { board[coord.y * self.size + coord.x - 1] } else { State::Dead };
-		let r  = if coord.x != self.size - 1 { board[coord.y * self.size + coord.x + 1] } else { State::Dead };
-		let dl = if coord.y != self.size - 1 && coord.x != 0 { board[(coord.y + 1) * self.size + coord.x - 1] } else { State::Dead };
-		let dd = if coord.y != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 0] } else { State::Dead };
-		let dr = if coord.y != self.size - 1 && coord.x != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 1] } else { State::Dead };
+	fn count_neighbors(coord: &Coord, board: &Vec<State>, size: usize) -> u8 {
+		let ul = if coord.y >= 1 && coord.x != 0 { board[(coord.y - 1) * size + coord.x - 1] } else { State::Dead };
+		let uu = if coord.y >= 1 { board[(coord.y - 1) * size + coord.x + 0] } else { State::Dead };
+		let ur = if coord.y >= 1 && coord.x != size - 1 { board[(coord.y - 1) * size + coord.x + 1] } else { State::Dead };
+		let l  = if coord.x != 0 { board[coord.y * size + coord.x - 1] } else { State::Dead };
+		let r  = if coord.x != size - 1 { board[coord.y * size + coord.x + 1] } else { State::Dead };
+		let dl = if coord.y != size - 1 && coord.x != 0 { board[(coord.y + 1) * size + coord.x - 1] } else { State::Dead };
+		let dd = if coord.y != size - 1 { board[(coord.y + 1) * size + coord.x + 0] } else { State::Dead };
+		let dr = if coord.y != size - 1 && coord.x != size - 1 { board[(coord.y + 1) * size + coord.x + 1] } else { State::Dead };
+
+		let mut neighbors: u8 = 0;
+		if ul == State::Alive { neighbors += 1; }
+		if uu == State::Alive { neighbors += 1; }
+		if ur == State::Alive { neighbors += 1; }
+		if l  == State::Alive { neighbors += 1; }
+		if r  == State::Alive { neighbors += 1; }
+		if dl == State::Alive { neighbors += 1; }
+		if dd == State::Alive { neighbors += 1; }
+		if dr == State::Alive { neighbors += 1; }
+
+		neighbors
+	}
+
+	fn count_neighbors_toroidally(coord: &Coord, board: &Vec<State>, size: usize) -> u8 {
+
+		let ul = if coord.y >= 1 {
+			if coord.x != 0 { board[(coord.y - 1) * size + coord.x - 1] } // normal case
+			else { board[coord.y * size - 1] } // left edge
+		} else {
+			if coord.x != 0 { board[(size - 1) * size + coord.x - 1] } // top edge
+			else { board[size * size - 1] } // top-left corner
+		};
+
+
+		let uu = if coord.y >= 1 {
+			board[(coord.y - 1) * size + coord.x + 0] // normal case
+		} else {
+			board[(size - 1) * size + coord.x + 0] // top edge
+		};
+
+		let ur = if coord.y >= 1 {
+			if coord.x != size - 1 { board[(coord.y - 1) * size + coord.x + 1] } // normal case
+			else { board[(coord.y - 1) * size + 0] } // right edge
+		} else {
+			if coord.x != size - 1 { board[(size - 1) * size + coord.x + 1] } // top edge
+			else { board[(size - 1) * size + 0] } // top-right corner
+		};
+
+		let l = if coord.x != 0 {
+			board[coord.y * size + coord.x - 1] // normal case
+		} else {
+			board[(coord.y + 1) * size - 1] // left edge
+		};
+
+		let r = if coord.x != size - 1 {
+			board[coord.y * size + coord.x + 1] // normal case
+		} else {
+			board[coord.y * size + 0] // right edge
+		};
+
+		let dl = if coord.y != size - 1 {
+			if coord.x != 0 { board[(coord.y + 1) * size + coord.x - 1] } // normal case
+			else { board[(coord.y + 2) * size - 1] } // left edge
+		} else {
+			if coord.x != 0 { board[coord.x - 1] } // bottom edge
+			else { board[size - 1] } // bottom-left corner
+		};
+
+		let dd = if coord.y != size - 1 {
+			board[(coord.y + 1) * size + coord.x + 0] // normal case
+		} else {
+			board[coord.x + 0] // bottom edge
+		};
+
+		let dr = if coord.y != size - 1 {
+			if coord.x != size - 1 { board[(coord.y + 1) * size + coord.x + 1] } // normal case
+			else { board[(coord.y + 1) * size] } // right edge
+		} else {
+			if coord.x != size - 1 { board[coord.x + 1] } // bottom edge
+			else { board[0] } // bottom-right corner
+		};
 
 		let mut neighbors: u8 = 0;
 		if ul == State::Alive { neighbors += 1; }
@@ -139,91 +220,4 @@ impl Game {
 			},
 		}
 	}
-
-	// pub fn advance_toroidally(&self) {
-	// 	// Get read lock for 'current' and mutex lock for 'next'
-	// 	// N.B. By locking 'next' first, this ensures that if another thread tries
-	// 	// 		to call 'advance', that thread will block until this is done.
-	// 	let mut next = self.next.lock().unwrap();
-	// 	let current = self.current.read().unwrap();
-
-	// 	for y in 0..self.size {
-	// 		for x in 0..self.size {
-	// 			let ul = if y >= 1 {
-	// 				if x != 0 { current[(y - 1) * self.size + x - 1] } // normal case
-	// 				else { current[y * self.size - 1] } // left edge
-	// 			} else {
-	// 				if x != 0 { current[(self.size - 1) * self.size + x - 1] } // top edge
-	// 				else { current[self.size * self.size - 1] } // top-left corner
-	// 			};
-
-
-	// 			let uu = if y >= 1 {
-	// 				current[(y - 1) * self.size + x + 0] // normal case
-	// 			} else {
-	// 				current[(self.size - 1) * self.size + x + 0] // top edge
-	// 			};
-
-	// 			let ur = if y >= 1 {
-	// 				if x != self.size - 1 { current[(y - 1) * self.size + x + 1] } // normal case
-	// 				else { current[(y - 1) * self.size + 0] } // right edge
-	// 			} else {
-	// 				if x != self.size - 1 { current[(self.size - 1) * self.size + x + 1] } // top edge
-	// 				else { current[(self.size - 1) * self.size + 0] } // top-right corner
-	// 			};
-
-	// 			let l = if x != 0 {
-	// 				current[y * self.size + x - 1] // normal case
-	// 			} else {
-	// 				current[(y + 1) * self.size - 1] // left edge
-	// 			};
-
-	// 			let r = if x != self.size - 1 {
-	// 				current[y * self.size + x + 1] // normal case
-	// 			} else {
-	// 				current[y * self.size + 0] // right edge
-	// 			};
-
-	// 			let dl = if y != self.size - 1 {
-	// 				if x != 0 { current[(y + 1) * self.size + x - 1] } // normal case
-	// 				else { current[(y + 2) * self.size - 1] } // left edge
-	// 			} else {
-	// 				if x != 0 { current[x - 1] } // bottom edge
-	// 				else { current[self.size - 1] } // bottom-left corner
-	// 			};
-
-	// 			let dd = if y != self.size - 1 {
-	// 				current[(y + 1) * self.size + x + 0] // normal case
-	// 			} else {
-	// 				current[x + 0] // bottom edge
-	// 			};
-
-	// 			let dr = if y != self.size - 1 {
-	// 				if x != self.size - 1 { current[(y + 1) * self.size + x + 1] } // normal case
-	// 				else { current[(y + 1) * self.size] } // right edge
-	// 			} else {
-	// 				if x != self.size - 1 { current[x + 1] } // bottom edge
-	// 				else { current[0] } // bottom-right corner
-	// 			};
-
-	// 			let mut neighbors: usize = 0;
-	// 			if ul == State::Alive { neighbors += 1; }
-	// 			if uu == State::Alive { neighbors += 1; }
-	// 			if ur == State::Alive { neighbors += 1; }
-	// 			if l == State::Alive { neighbors += 1; }
-	// 			if r == State::Alive { neighbors += 1; }
-	// 			if dl == State::Alive { neighbors += 1; }
-	// 			if dd == State::Alive { neighbors += 1; }
-	// 			if dr == State::Alive { neighbors += 1; }
-
-	// 			next[y * self.size + x] = Game::get_next_cell_from_current_cell_and_neighbors(current[y * self.size + x], neighbors);
-	// 		}
-	// 	}
-
-	// 	// Exchange read lock for write lock
-	// 	drop(current);
-	// 	let mut current = self.current.write().unwrap();
-
-	// 	*current = next.clone();
-	// }
 }
