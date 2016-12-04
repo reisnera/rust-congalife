@@ -6,7 +6,13 @@ use self::rand::Rng;
 use std::sync::{Arc, Mutex, RwLock};
 use rayon::prelude::*;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum State {
+	Dead,
+	Alive,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct Coord {
 	x: usize,
 	y: usize,
@@ -16,8 +22,8 @@ struct Coord {
 pub struct Game {
 	size: usize,
 	coords: Arc< Vec<Coord> >,
-	current: Arc<RwLock< Vec<bool> >>,
-	next: Arc<Mutex< Vec<bool> >>,
+	current: Arc<RwLock< Vec<State> >>,
+	next: Arc<Mutex< Vec<State> >>,
 }
 
 // impl From<Vec<State>> for Game {
@@ -40,7 +46,7 @@ impl Game {
 		assert!(percent_chance_for_cell_to_be_alive > 0.0);
 
 		let mut coords = vec![Coord {x: 0, y: 0}; size*size];
-		let mut board  = vec![false; size*size];
+		let mut board  = vec![State::Dead; size*size];
 
 		let mut rng = rand::thread_rng(); // Cache thread-local rng
 
@@ -48,8 +54,8 @@ impl Game {
 			coords[i].y = i/size;
 			coords[i].x = i - coords[i].y * size;
 			*state = match rng.next_f32() {
-				i if i < percent_chance_for_cell_to_be_alive => true,
-				_ => false,
+				i if i < percent_chance_for_cell_to_be_alive => State::Alive,
+				_ => State::Dead,
 			};
 		}
 
@@ -65,7 +71,7 @@ impl Game {
 		self.size
 	}
 
-	pub fn get_current_read_lock(&self) -> std::sync::RwLockReadGuard< Vec<bool> > {
+	pub fn get_current_read_lock(&self) -> std::sync::RwLockReadGuard< Vec<State> > {
 		self.current.read().unwrap()
 	}
 
@@ -92,37 +98,36 @@ impl Game {
 			});
 	}
 
-	fn count_neighbors(&self, coord: &Coord, board: &Vec<bool>) -> u8 {
-		let ul = if coord.y >= 1 && coord.x != 0 { board[(coord.y - 1) * self.size + coord.x - 1] } else { false };
-		let uu = if coord.y >= 1 { board[(coord.y - 1) * self.size + coord.x + 0] } else { false };
-		let ur = if coord.y >= 1 && coord.x != self.size - 1 { board[(coord.y - 1) * self.size + coord.x + 1] } else { false };
-		let l  = if coord.x != 0 { board[coord.y * self.size + coord.x - 1] } else { false };
-		let r  = if coord.x != self.size - 1 { board[coord.y * self.size + coord.x + 1] } else { false };
-		let dl = if coord.y != self.size - 1 && coord.x != 0 { board[(coord.y + 1) * self.size + coord.x - 1] } else { false };
-		let dd = if coord.y != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 0] } else { false };
-		let dr = if coord.y != self.size - 1 && coord.x != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 1] } else { false };
+	fn count_neighbors(&self, coord: &Coord, board: &Vec<State>) -> u8 {
+		let ul = if coord.y >= 1 && coord.x != 0 { board[(coord.y - 1) * self.size + coord.x - 1] } else { State::Dead };
+		let uu = if coord.y >= 1 { board[(coord.y - 1) * self.size + coord.x + 0] } else { State::Dead };
+		let ur = if coord.y >= 1 && coord.x != self.size - 1 { board[(coord.y - 1) * self.size + coord.x + 1] } else { State::Dead };
+		let l  = if coord.x != 0 { board[coord.y * self.size + coord.x - 1] } else { State::Dead };
+		let r  = if coord.x != self.size - 1 { board[coord.y * self.size + coord.x + 1] } else { State::Dead };
+		let dl = if coord.y != self.size - 1 && coord.x != 0 { board[(coord.y + 1) * self.size + coord.x - 1] } else { State::Dead };
+		let dd = if coord.y != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 0] } else { State::Dead };
+		let dr = if coord.y != self.size - 1 && coord.x != self.size - 1 { board[(coord.y + 1) * self.size + coord.x + 1] } else { State::Dead };
 
 		let mut neighbors: u8 = 0;
-		if ul == true { neighbors += 1; }
-		if uu == true { neighbors += 1; }
-		if ur == true { neighbors += 1; }
-		if l  == true { neighbors += 1; }
-		if r  == true { neighbors += 1; }
-		if dl == true { neighbors += 1; }
-		if dd == true { neighbors += 1; }
-		if dr == true { neighbors += 1; }
+		if ul == State::Alive { neighbors += 1; }
+		if uu == State::Alive { neighbors += 1; }
+		if ur == State::Alive { neighbors += 1; }
+		if l  == State::Alive { neighbors += 1; }
+		if r  == State::Alive { neighbors += 1; }
+		if dl == State::Alive { neighbors += 1; }
+		if dd == State::Alive { neighbors += 1; }
+		if dr == State::Alive { neighbors += 1; }
 
 		neighbors
 	}
 
-	// Calculates the next state for this cell (but does not set it!)
-	fn calculate_next_state(state: bool, number_of_neighbors: u8) -> bool {
+	fn calculate_next_state(state: State, number_of_neighbors: u8) -> State {
 		match state {
-			false => {
-				if number_of_neighbors != 3 { false } else { true }
+			State::Dead => {
+				if number_of_neighbors != 3 { State::Dead } else { State::Alive }
 			},
-			true => {
-				if number_of_neighbors < 2 || number_of_neighbors > 3 { false } else { true }
+			State::Alive => {
+				if number_of_neighbors < 2 || number_of_neighbors > 3 { State::Dead } else { State::Alive }
 			},
 		}
 	}
