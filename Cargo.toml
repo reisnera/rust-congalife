@@ -1,7 +1,8 @@
 [package]
 name = "congalife"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["apostrophest <stephen@chomadoma.net>"]
 
 [dependencies]
 rand = "0.3.0"
+rayon = "0.5.0"
