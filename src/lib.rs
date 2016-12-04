@@ -26,18 +26,26 @@ pub struct Game {
 	next: Arc<Mutex< Vec<State> >>,
 }
 
-// impl From<Vec<State>> for Game {
-// 	fn from(preset_game: Vec<State>) -> Self {
-// 		let size: usize = (preset_game.len() as f64).sqrt() as usize;
-// 		assert!(size >= 3);
+impl From<Vec<State>> for Game {
+	fn from(preset_game: Vec<State>) -> Self {
+		let size: usize = (preset_game.len() as f64).sqrt() as usize;
+		assert!(size >= 3);
 
-// 		Game {
-// 			size: size,
-// 			current: Arc::new(RwLock::new(preset_game.clone())),
-// 			next: Arc::new(Mutex::new(preset_game.clone()))
-// 		}
-// 	}
-// }
+		let mut coords = vec![Coord {x: 0, y: 0}; size*size];
+
+		for (i, coord) in coords.iter_mut().enumerate() {
+			coord.y = i/size;
+			coord.x = i - coord.y * size;
+		}
+
+		Game {
+			size: size,
+			coords: Arc::new(coords),
+			current: Arc::new(RwLock::new(preset_game)),
+			next: Arc::new(Mutex::new(Vec::with_capacity(size)))
+		}
+	}
+}
 
 impl Game {
 	pub fn new(size: usize, percent_chance_for_cell_to_be_alive: f32) -> Game {
