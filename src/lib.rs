@@ -15,14 +15,14 @@ pub struct GameCell {
 
 impl GameCell {
 	fn count_neighbors(&self, board: &Vec<GameCell>, size: usize) -> u8 {
-		let ul = if self.y >= 1 && self.x != 0 { board[(self.y - 1) * size + self.x - 1].alive } else {false};
-		let uu = if self.y >= 1 {board[(self.y - 1) * size + self.x + 0].alive } else {false};
-		let ur = if self.y >= 1 && self.x != size - 1 { board[(self.y - 1) * size + self.x + 1].alive } else {false};
-		let l  = if self.x != 0 {board[self.y * size + self.x - 1].alive } else {false};
-		let r  = if self.x != size - 1 {board[self.y * size + self.x + 1].alive } else {false};
-		let dl = if self.y != size - 1 && self.x != 0 {board[(self.y + 1) * size + self.x - 1].alive } else {false};
-		let dd = if self.y != size - 1 {board[(self.y + 1) * size + self.x + 0].alive } else {false};
-		let dr = if self.y != size - 1 && self.x != size - 1 {board[(self.y + 1) * size + self.x + 1].alive } else {false};
+		let ul = if self.y >= 1 && self.x != 0 { board[(self.y - 1) * size + self.x - 1].alive } else { false };
+		let uu = if self.y >= 1 { board[(self.y - 1) * size + self.x + 0].alive } else { false };
+		let ur = if self.y >= 1 && self.x != size - 1 { board[(self.y - 1) * size + self.x + 1].alive } else { false };
+		let l  = if self.x != 0 { board[self.y * size + self.x - 1].alive } else { false };
+		let r  = if self.x != size - 1 { board[self.y * size + self.x + 1].alive } else { false };
+		let dl = if self.y != size - 1 && self.x != 0 { board[(self.y + 1) * size + self.x - 1].alive } else { false };
+		let dd = if self.y != size - 1 { board[(self.y + 1) * size + self.x + 0].alive } else { false };
+		let dr = if self.y != size - 1 && self.x != size - 1 { board[(self.y + 1) * size + self.x + 1].alive } else { false };
 
 		let mut neighbors: u8 = 0;
 		if ul == true { neighbors += 1; }
