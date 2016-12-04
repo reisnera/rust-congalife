@@ -38,21 +38,11 @@ impl GameCell {
 	}
 }
 
-// struct Board( Vec<GameCell> );
-
-// impl Index<usize> for Board {
-// 	type Output = State;
-
-// 	fn index(&self, index: usize) -> &State {
-// 		self.0[index].state;
-// 	}
-// }
-
 #[derive(Clone)]
 pub struct Game {
 	pub size: usize,
 	current: Arc<RwLock< Vec<GameCell> >>,
-	next: Arc<Mutex< Vec<GameCell> >>,
+	next: Arc<Mutex< Vec<bool> >>,
 }
 
 // impl From<Vec<State>> for Game {
@@ -99,21 +89,13 @@ impl Game {
 		self.current.read().unwrap()
 	}
 
-	fn get_next_cell_from_current_cell_and_neighbors(game_cell: &GameCell, number_of_neighbors: u8) -> GameCell {
+	fn get_next_state_from_current_cell_and_neighbor_count(game_cell: &GameCell, number_of_neighbors: u8) -> bool {
 		match game_cell.alive {
 			false => {
-				if number_of_neighbors != 3 {
-					GameCell {x: game_cell.x, y: game_cell.y, alive: false}
-				} else {
-					GameCell {x: game_cell.x, y: game_cell.y, alive: true}
-				}
+				if number_of_neighbors != 3 { false } else { true }
 			},
 			true => {
-				if number_of_neighbors < 2 || number_of_neighbors > 3 {
-					GameCell {x: game_cell.x, y: game_cell.y, alive: false}
-				} else {
-					GameCell {x: game_cell.x, y: game_cell.y, alive: true}
-				}
+				if number_of_neighbors < 2 || number_of_neighbors > 3 { false } else { true }
 			},
 		}
 	}
@@ -125,7 +107,7 @@ impl Game {
 		current_guard.par_iter()
 			.map(|game_cell| {
 				let neighbor_count = game_cell.count_neighbors(&*current_guard, self.size);
-				Game::get_next_cell_from_current_cell_and_neighbors(game_cell, neighbor_count)
+				Game::get_next_state_from_current_cell_and_neighbor_count(game_cell, neighbor_count)
 			})
 			.collect_into(&mut *next_guard);
 
@@ -133,7 +115,11 @@ impl Game {
 		drop(current_guard);
 		let mut current_guard = self.current.write().unwrap();
 
-		*current_guard = next_guard.clone();
+		current_guard.par_iter_mut()
+			.enumerate()
+			.for_each(| (i, game_cell) | {
+				game_cell.alive = next_guard[i];
+			});
 	}
 
 	// pub fn advance_toroidally(&self) {
