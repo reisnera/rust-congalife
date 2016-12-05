@@ -1,8 +1,4 @@
-#![feature(test)]
-#[cfg(test)]
-
 extern crate congalife;
-extern crate test;
 
 use congalife::{Game, State};
 
