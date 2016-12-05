@@ -82,6 +82,11 @@ impl Game {
 		self.current.read().unwrap()
 	}
 
+	pub fn set_cell(&self, x: usize, y: usize, state: State) {
+		let mut current_guard = self.current.write().unwrap();
+		current_guard[y * self.size + x] = state;
+	}
+
 	pub fn advance(&self) {
 		self.advance_with(Game::count_neighbors);
 	}
